@@ -8,7 +8,7 @@ import cachePrefix from 'lib/helpers/cachePrefix';
 const redisOpts = redis.getOptions();
 
 export default () => {
-  const subClient = redis.createClient();
+  const subClient = redis.createSubscriptionClient();
   const pubClient = redis.createClient();
   const subKey = cachePrefix('statement.notify'); // subscribe channel is not prefixed by bull, so must manually do this!
   const pubKey = cachePrefix('statement.new');
