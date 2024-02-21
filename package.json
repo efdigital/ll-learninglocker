@@ -36,7 +36,7 @@
     "test-worker": "mocha-webpack --exit --webpack-config \"worker/testConfig.js\" \"worker/src/**/*-test.js\"",
     "test-lib": "mocha-webpack --exit --webpack-config \"api/testConfig.js\" \"lib/**/*-test.js\"",
     "test-cli": "mocha-webpack --exit --webpack-config \"cli/testConfig.js\" \"cli/**/*-test.js\" --include lib/models",
-    "test": "yarn test-api && yarn test-lib && yarn test-worker && && yarn test-cli",
+    "test": "yarn test-api && yarn test-lib && yarn test-worker && yarn test-cli",
     "migrate": "node cli/dist/server migrateMongo --up",
     "rollback": "node cli/dist/server migrateMongo --down last",
     "clean-cache": "sh ./clean-build-cache.sh"
