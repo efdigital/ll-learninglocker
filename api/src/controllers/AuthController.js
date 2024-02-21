@@ -2,12 +2,11 @@ import passport from 'passport';
 import jsonwebtoken from 'jsonwebtoken';
 import { v4 as uuid } from 'uuid';
 import ms from 'ms';
-import status from 'http-status';
 import logger from 'lib/logger';
 import User from 'lib/models/user';
 import OAuthToken from 'lib/models/oAuthToken';
 import { sendResetPasswordToken } from 'lib/helpers/email';
-import { AUTH_JWT_SUCCESS, AUTH_JWT_REFRESH } from 'lib/constants/routes';
+import { AUTH_JWT_REFRESH } from 'lib/constants/routes';
 import {
   ACCESS_TOKEN_VALIDITY_PERIOD_SEC,
   JWT_REFRESH_TOKEN_EXPIRATION,
@@ -262,20 +261,6 @@ const jwtOrganisation = (req, res) => {
   }
 };
 
-const googleSuccess = (user, response) => {
-  // we have successfully signed into google
-  // create a JWT and set it in the query params (only way to return it with a redirect)
-  createUserJWT(user, 'google')
-    .then(token => response.redirect(`/api${AUTH_JWT_SUCCESS}?access_token=${token}`))
-    .catch(
-      (err) => {
-        response
-          .status(status.INTERNAL_SERVER_ERROR)
-          .send(err);
-      }
-    );
-};
-
 const clientInfo = (req, res) => {
   const authInfo = req.user.authInfo || {};
   const { title, lrs_id, organisation, scopes } = authInfo.client;
@@ -339,7 +324,6 @@ export default {
   jwt,
   jwtRefresh,
   jwtOrganisation,
-  googleSuccess,
   success,
   issueOAuth2AccessToken,
 };
