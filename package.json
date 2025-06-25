@@ -65,7 +65,7 @@
     "cors": "^2.8.1",
     "dotenv": "^2.0.0",
     "express": "^4.13.4",
-    "express-restify-mongoose": "^7.0.0",
+    "express-restify-mongoose": "^9.0.0",
     "faker": "^3.1.0",
     "fast-csv": "^3.7.0",
     "git-rev": "^0.2.1",

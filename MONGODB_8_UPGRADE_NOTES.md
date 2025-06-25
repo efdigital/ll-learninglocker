@@ -233,6 +233,44 @@ If issues arise:
 - ✅ Fixed CSV processing timing issues that were causing empty result arrays in tests
 - **File**: `lib/services/importPersonas/importPersonas.js`
 
+#### Queue Service Promise/Callback Fix
+**Issue**: Queue publish/subscribe functions still using callbacks causing 500 errors when awaited
+- ✅ Updated `publish()` and `subscribe()` functions to handle both promise and callback patterns
+- ✅ Fixed BatchDeleteController 500 errors when publishing to queue
+- **File**: `lib/services/queue/index.js`
+
+#### Passport Authentication Fix (Critical)
+**Issue**: Passport strategies using callback patterns causing "Model.findOne() no longer accepts a callback" errors
+- ✅ Converted `userBasic` strategy: `User.findOne()` and `bcrypt.compare()` callbacks to async/await
+- ✅ Converted `clientBasic` strategy: `Client.findOne()` callback to async/await  
+- ✅ Converted `OAuth2_Authorization` strategy: `Client.findOne()` callback to async/await
+- ✅ Fixed API authentication system compatibility with Mongoose 8
+- **File**: `api/src/auth/passport.js`
+
+#### LRS Model Callback Fixes
+**Issue**: LRS model using callback patterns causing "Model.prototype.save() no longer accepts a callback" errors
+- ✅ Fixed `createDefaultClient()`: Removed callback from `client.save()`
+- ✅ Fixed `updateStatementCount()`: Converted `Statement.countDocuments()` callback and added await to `lrs.save()`
+- ✅ Fixed `decrementStatementCount()`: Added await and changed deprecated `.update()` to `.updateOne()`
+- **File**: `lib/models/lrs.js`
+
+#### Persona Service Error Type Fix
+**Issue**: PersonaController test expecting wrong error type from persona-service package
+- ✅ Updated test to expect `NoModelWithId` instead of `NoModel` error type
+- ✅ Added import for correct error class from `@learninglocker/persona-service/dist/errors/NoModelWithId`
+- **File**: `api/src/routes/tests/personaController/mergePersona-test.js`
+
+#### Express-Restify-Mongoose Version Fix (Critical)
+**Issue**: "Query was already executed" errors due to incompatible express-restify-mongoose version
+- ✅ Updated express-restify-mongoose from `^7.0.0` to `^9.0.0` for Mongoose 8 compatibility
+- ✅ Version 7.x only supports Mongoose 6.x, while version 9.x supports Mongoose 6.x-8.x
+- ✅ Updated import statement: `import { serve as restify } from 'express-restify-mongoose'`
+- ✅ Removed deprecated `restify.defaults()` call and spread RESTIFY_DEFAULTS into each serve call
+- ✅ Changed all `restify.serve()` calls to `restify()` and included default options
+- **Root Cause**: express-restify-mongoose 7.x was executing queries multiple times with Mongoose 8
+- **API Breaking Changes**: Version 9.x removed the `defaults` method and changed export structure
+- **Files**: `package.json`, `api/src/routes/HttpRoutes.js`
+
 ## Notes
 
 - The codebase is now compatible with MongoDB 8 and Mongoose 8
