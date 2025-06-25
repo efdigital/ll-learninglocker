@@ -112,7 +112,7 @@ const resetPassword = async (req, res, next) => {
 };
 
 const jwt = (req, res, next) => {
-  passport.authenticate('userBasic', { session: false }, (err, data) => {
+  passport.authenticate('userBasic', { session: false }, async (err, data) => {
     if (err) {
       return next(err); // will generate a 500 error
     }
@@ -158,9 +158,12 @@ const jwt = (req, res, next) => {
           user.authLockoutExpiry = new Date();
         }
         user.authLastAttempt = new Date();
-        return user.save(() =>
-           authFailure(data.reason)
-        );
+        try {
+          await user.save();
+          return authFailure(data.reason);
+        } catch (err) {
+          return authFailure(AUTH_FAILURE.OTHER);
+        }
       }
       return authFailure(data.reason);
     }
@@ -169,21 +172,20 @@ const jwt = (req, res, next) => {
     user.authLockoutExpiry = null;
     user.authFailedAttempts = 0;
     user.authLastAttempt = new Date();
-    return user.save(() =>
-      Promise.all([createUserJWT(user), createUserRefreshJWT(user)])
-        .then(
-          ([accessToken, refreshToken]) =>
-            res
-              .cookie(
-                `refresh_token_user_${user._id}`,
-                refreshToken,
-                buildRefreshCookieOption(req.protocol),
-              )
-              .set('Content-Type', 'text/plain')
-              .send(accessToken)
-          )
-        .catch(authFailure)
-    );
+    try {
+      await user.save();
+      const [accessToken, refreshToken] = await Promise.all([createUserJWT(user), createUserRefreshJWT(user)]);
+      return res
+        .cookie(
+          `refresh_token_user_${user._id}`,
+          refreshToken,
+          buildRefreshCookieOption(req.protocol),
+        )
+        .set('Content-Type', 'text/plain')
+        .send(accessToken);
+    } catch (err) {
+      return authFailure(AUTH_FAILURE.OTHER);
+    }
   })(req, res, next);
 };
 
@@ -266,7 +268,7 @@ const success = (req, res) => {
 };
 
 const issueOAuth2AccessToken = (req, res) => {
-  passport.authenticate('OAuth2_Authorization', DEFAULT_PASSPORT_OPTIONS, (err, client) => {
+  passport.authenticate('OAuth2_Authorization', DEFAULT_PASSPORT_OPTIONS, async (err, client) => {
     if (err) {
       if (err.isClientError) {
         res.status(400);
@@ -283,24 +285,23 @@ const issueOAuth2AccessToken = (req, res) => {
     const expireAt = new Date(createdAt.getTime());
     expireAt.setSeconds(createdAt.getSeconds() + ACCESS_TOKEN_VALIDITY_PERIOD_SEC);
 
-    OAuthToken.create({
-      clientId: client._id,
-      accessToken,
-      createdAt,
-      expireAt,
-    }, (err) => {
-      if (err) {
-        res.status(500);
-        res.send(err);
-        return;
-      }
+    try {
+      await OAuthToken.create({
+        clientId: client._id,
+        accessToken,
+        createdAt,
+        expireAt,
+      });
       res.status(200);
       res.send({
         access_token: accessToken,
         token_type: 'bearer',
         expires_in: ACCESS_TOKEN_VALIDITY_PERIOD_SEC,
       });
-    });
+    } catch (err) {
+      res.status(500);
+      res.send(err);
+    }
   })(req, res);
 };
 

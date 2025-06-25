@@ -29,6 +29,7 @@ import ImportPersonasController from 'api/controllers/ImportPersonasController';
 import StatementMetadataController from 'api/controllers/StatementMetadataController';
 import BatchDeleteController from 'api/controllers/BatchDeleteController';
 import RequestAppAccessController from 'api/controllers/RequestAppAccessController';
+import PersonaAttributeController from 'api/controllers/PersonaAttributeController';
 
 // MODELS
 import LRS from 'lib/models/lrs';
@@ -266,6 +267,46 @@ router.get(
 );
 
 /**
+ * CUSTOM ROUTES (Mongoose 8 Compatibility Workarounds)
+ */
+// Custom PersonaAttribute CRUD endpoints to work around express-restify-mongoose issues
+router.get(
+  routes.PERSONA_ATTRIBUTE,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  PersonaAttributeController.getPersonaAttributes
+);
+
+router.get(
+  routes.PERSONA_ATTRIBUTE_ID,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  PersonaAttributeController.getPersonaAttribute
+);
+
+router.post(
+  routes.PERSONA_ATTRIBUTE,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  PersonaAttributeController.createPersonaAttribute
+);
+
+router.put(
+  routes.PERSONA_ATTRIBUTE_ID,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  PersonaAttributeController.updatePersonaAttribute
+);
+
+router.patch(
+  routes.PERSONA_ATTRIBUTE_ID,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  PersonaAttributeController.updatePersonaAttribute
+);
+
+router.delete(
+  routes.PERSONA_ATTRIBUTE_ID,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  PersonaAttributeController.deletePersonaAttribute
+);
+
+/**
  * REST APIS
  */
 restify(router, Organisation, {
@@ -353,10 +394,8 @@ restify(router, StatementForwarding, RESTIFY_DEFAULTS);
 restify(router, QueryBuilderCache, RESTIFY_DEFAULTS);
 restify(router, QueryBuilderCacheValue, RESTIFY_DEFAULTS);
 restify(router, Role, RESTIFY_DEFAULTS);
-restify(router, PersonaAttribute, {
-  ...RESTIFY_DEFAULTS,
-  preDelete: async (req, res, next) => next(),
-});
+// PersonaAttribute routes handled by custom controller due to Mongoose 8 compatibility issues
+// restify(router, PersonaAttribute, RESTIFY_DEFAULTS);
 restify(router, PersonasImport, RESTIFY_DEFAULTS);
 restify(router, PersonasImportTemplate, RESTIFY_DEFAULTS);
 restify(router, SiteSettings, RESTIFY_DEFAULTS);
@@ -386,7 +425,7 @@ const generatedRouteModels = [
   Download,
   ImportCsv,
   Role,
-  PersonaAttribute,
+  // PersonaAttribute, // Using custom controller
   PersonasImport,
   PersonasImportTemplate,
   BatchDelete

@@ -23,31 +23,43 @@ const provider = 'native';
 
 describe('API HTTP Route tests', function describeTest() {
   this.timeout(10000);
-  before((done) => {
+  before(async () => {
     if (connection.readyState !== 1) {
-      connection.on('connected', () => {
-        done();
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Database connection timeout after 10 seconds'));
+        }, 10000);
+
+        const onConnected = () => {
+          clearTimeout(timeout);
+          connection.removeListener('error', onError);
+          resolve();
+        };
+
+        const onError = (error) => {
+          clearTimeout(timeout);
+          connection.removeListener('connected', onConnected);
+          reject(error);
+        };
+
+        connection.once('connected', onConnected);
+        connection.once('error', onError);
       });
-    } else {
-      done();
     }
   });
 
-  beforeEach('Set up organisation and users for testing', (done) => {
-    db.prepare(async (err) => {
-      if (err) return done(err);
-      try {
-        const token = await createUserJWT(db.user, provider);
-        jwtToken = token;
-        done();
-      } catch (err) {
-        done(err);
-      }
-    });
+  beforeEach('Set up organisation and users for testing', async () => {
+    try {
+      await db.prepare();
+      const token = await createUserJWT(db.user, provider);
+      jwtToken = token;
+    } catch (err) {
+      throw err;
+    }
   });
 
-  afterEach('Clear db collections', (done) => {
-    db.cleanUp(done);
+  afterEach('Clear db collections', async () => {
+    await db.cleanUp();
   });
 
   describe('/api/auth/jwt/password', () => {
@@ -318,32 +330,27 @@ describe('API HTTP Route tests', function describeTest() {
   });
 
   describe('Try and reset password using a token', () => {
-    it('Should find the user using token and email and change their user password', (done) => {
-      db.user.createResetToken((token) => {
+    it('Should find the user using token and email and change their user password', async () => {
+      try {
+        const token = await db.user.createResetToken();
         db.user.resetTokens.push(token);
-        db.user.save((err) => {
-          if (err) return done(err);
+        await db.user.save();
 
-          apiApp
-            .post(routes.AUTH_RESETPASSWORD_RESET)
-            .send({
-              email: db.user.email,
-              token: token.token,
-              password: 'mynewpassword999'
-            })
-            .expect(200)
-            .end((err) => {
-              if (err) return done(err);
-              expect(err).to.equal(null);
+        await apiApp
+          .post(routes.AUTH_RESETPASSWORD_RESET)
+          .send({
+            email: db.user.email,
+            token: token.token,
+            password: 'mynewpassword999'
+          })
+          .expect(200);
 
-              const User = getConnection().model('User');
-              User.findOne({ _id: db.user.id }, (finderr, user) => {
-                expect(user.password).to.not.equal(db.user.password);
-                done();
-              });
-            });
-        });
-      });
+        const User = getConnection().model('User');
+        const user = await User.findOne({ _id: db.user.id });
+        expect(user.password).to.not.equal(db.user.password);
+      } catch (err) {
+        throw err;
+      }
     });
   });
 
