@@ -52,14 +52,27 @@ describe('batchStatementDeletion', () => {
     });
   });
 
-  afterEach((done) => {
-    async.forEach(
-      [Statement, SiteSettings, BatchDelete, Client],
-      (model, doneDeleting) => {
-        model.deleteMany({}, doneDeleting);
-      },
-      done
-    );
+  afterEach(async () => {
+    try {
+      await Statement.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up Statement:', err.message);
+    }
+    try {
+      await SiteSettings.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up SiteSettings:', err.message);
+    }
+    try {
+      await BatchDelete.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up BatchDelete:', err.message);
+    }
+    try {
+      await Client.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up Client:', err.message);
+    }
   });
 
   it('should delete statements if in the window', async () => {
@@ -494,7 +507,7 @@ describe('batchStatementDeletion', () => {
     }, () => {});
 
     // all statemenst should be there;
-    const result = await Statement.count({ organisation: testId });
+    const result = await Statement.countDocuments({ organisation: testId });
     expect(result).to.equal(3);
 
     const batchDelete = await BatchDelete.findById(batchDeleteId);

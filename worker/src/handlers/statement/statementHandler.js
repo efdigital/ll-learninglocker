@@ -31,7 +31,7 @@ const queueDependencies = {
   },
 };
 
-export const addStatementToPendingQueues = (statement, passedQueues, done) => {
+export const addStatementToPendingQueues = async (statement, passedQueues, done) => {
   const queues = passedQueues || queueDependencies;
   if (!statement) {
     logger.error('No statement provided');
@@ -56,74 +56,73 @@ export const addStatementToPendingQueues = (statement, passedQueues, done) => {
     return !preReqsCompleted || queueCompleted || queueProcessing || !isAllowed;
   });
 
-  return Statement.updateOne(
-    { _id: statement._id },
-    {
-      $addToSet: { processingQueues: { $each: pendingQueueNames } }
-    },
-    (err) => {
-      if (err) return done(err);
-      // adding to queue returns a promise
-      // turns queue names into a stream of promises
-      // call done when they have all completed
-      return highland(pendingQueueNames).flatMap((queueName) => {
-        logger.debug('ADDING STATEMENT TO QUEUE', queueName);
-        const response = Queue.publish({
-          queueName,
-          payload: { statementId: statement._id }
-        });
-        return highland(response);
-      }).apply(() => {
-        if (size(pendingQueueNames) > 0) {
-          logger.debug(`ADDED ${statement._id} to ${pendingQueueNames.join(', ')}`);
-        } else {
-          logger.debug(`PROCESSED QUEUE FOR STATEMENT ${statement._id}`);
-        }
+  try {
+    await Statement.updateOne(
+      { _id: statement._id },
+      {
+        $addToSet: { processingQueues: { $each: pendingQueueNames } }
+      }
+    );
 
-        return done();
+    // adding to queue returns a promise
+    // turns queue names into a stream of promises
+    // call done when they have all completed
+    return highland(pendingQueueNames).flatMap((queueName) => {
+      logger.debug('ADDING STATEMENT TO QUEUE', queueName);
+      const response = Queue.publish({
+        queueName,
+        payload: { statementId: statement._id }
       });
-    }
-  );
+      return highland(response);
+    }).apply(() => {
+      if (size(pendingQueueNames) > 0) {
+        logger.debug(`ADDED ${statement._id} to ${pendingQueueNames.join(', ')}`);
+      } else {
+        logger.debug(`PROCESSED QUEUE FOR STATEMENT ${statement._id}`);
+      }
+
+      return done();
+    });
+  } catch (err) {
+    return done(err);
+  }
 };
 
-export default ({ status, statementId }, jobDone) => {
+export default async ({ status, statementId }, jobDone) => {
   try {
     if (status) {
       logger.debug(`COMPLETED ${statementId} - ${status}`);
       const idFilter = { _id: statementId };
-      return Statement.updateOne(
+
+      await Statement.updateOne(
         idFilter,
         {
           $addToSet: { completedQueues: status },
           $pull: { processingQueues: status }
-        },
-        async (err) => {
-          const statement = await Statement.findOne(idFilter)
-            .select({ _id: 1, completedQueues: 1, processingQueues: 1 })
-            .lean();
-
-          if (err) logger.error('Statement update error', err);
-          if (err) return jobDone(err);
-          // get the statement so that we can find which queues it has already been through
-          return addStatementToPendingQueues(statement, queueDependencies, (err) => {
-            if (err) logger.error('addStatementToPendingQueues error', err);
-            if (jobDone) return jobDone(err);
-          });
         }
       );
+
+      const statement = await Statement.findOne(idFilter)
+        .select({ _id: 1, completedQueues: 1, processingQueues: 1 })
+        .lean();
+
+      // get the statement so that we can find which queues it has already been through
+      return addStatementToPendingQueues(statement, queueDependencies, (err) => {
+        if (err) logger.error('addStatementToPendingQueues error', err);
+        if (jobDone) return jobDone(err);
+      });
     }
 
     logger.debug(`NO STATUS, statementId: ${statementId}`);
-    return Statement.findById(
+    const statement = await Statement.findById(
       statementId,
-      { _id: 1, completedQueues: 1, processingQueues: 1 },
-      (err, statement) => {
-        addStatementToPendingQueues(statement, queueDependencies, (err) => {
-          if (err) logger.error('addStatementToPendingQueues error', err);
-          if (jobDone) return jobDone(err);
-        });
-      }
+      { _id: 1, completedQueues: 1, processingQueues: 1 }
     );
+
+    return addStatementToPendingQueues(statement, queueDependencies, (err) => {
+      if (err) logger.error('addStatementToPendingQueues error', err);
+      if (jobDone) return jobDone(err);
+    });
   } catch (err) {
     logger.error('statementHandler error', err);
     if (jobDone) jobDone(err);

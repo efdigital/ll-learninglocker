@@ -17,12 +17,12 @@ describe('Query builder cache handler test', () => {
   });
 
   beforeEach('Set up caches and statements for testing', async () => {
-    await promisify(queryBuilderCacheDBHelper.cleanUp)();
-    await promisify(queryBuilderCacheDBHelper.prepare)();
+    await queryBuilderCacheDBHelper.cleanUp();
+    await queryBuilderCacheDBHelper.prepare();
   });
 
-  afterEach('Clear db collections', (done) => {
-    queryBuilderCacheDBHelper.cleanUp(done);
+  afterEach('Clear db collections', async () => {
+    await queryBuilderCacheDBHelper.cleanUp();
   });
 
   describe('getAtPath', () => {

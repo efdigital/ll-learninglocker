@@ -39,15 +39,12 @@ describe('statementForwardingDeadLetterHandler', () => {
       statementForwarding
     }, () => resolve()));
 
-    await Statement.findById(statementId).then((statementModel) => {
-      expect(statementModel.deadForwardingQueue[0].toString()).to
-        .equal(statementForwardingId);
-      expect(statementModel.pendingForwardingQueue.length).to
-        .equal(0);
-    });
+    const statementModel = await Statement.findById(statementId);
+    expect(statementModel.deadForwardingQueue[0].toString()).to
+      .equal(statementForwardingId);
+    expect(statementModel.pendingForwardingQueue.length).to
+      .equal(0);
 
-    await new Promise(resolve =>
-      Statement.deleteMany({}, () => resolve())
-    );
+    await Statement.deleteMany({});
   });
 });

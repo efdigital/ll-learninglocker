@@ -16,15 +16,9 @@ import extractPersonasHandler, {
 
 const objectId = mongoose.Types.ObjectId;
 
-const cleanUp = () => new Promise(reslove =>
-  async.forEach(
-    [Statement],
-    (model, doneDeleting) => {
-      model.deleteMany({}, doneDeleting);
-    },
-    reslove
-  )
-);
+const cleanUp = async () => {
+  await Statement.deleteMany({});
+};
 
 describe('Extract persona handler', () => {
   const personaService = getPersonaService();

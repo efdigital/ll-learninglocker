@@ -11,7 +11,20 @@ import statementForwardingHandler from '../statementForwardingHandler';
 import { purgeQueues } from './utils';
 
 describe('Statement Forwarding handler', () => {
-  it('Should take a statement and put it in a queue for each statmentForwarder', () => {
+  afterEach(async () => {
+    try {
+      await StatementForwarding.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up StatementForwarding:', err.message);
+    }
+    try {
+      await Statement.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up Statement:', err.message);
+    }
+  });
+
+  it('Should take a statement and put it in a queue for each statmentForwarder', async () => {
     const statementId = '561a679c0c5d017e4004714f';
     const organisationId = '561a679c0c5d017e4004715a';
 
@@ -26,93 +39,86 @@ describe('Statement Forwarding handler', () => {
       }
     });
 
-    const cleanUp = () => new Promise(reslove =>
-      async.forEach(
-        [StatementForwarding, Statement],
-        (model, doneDeleting) => {
-          model.deleteMany({}, doneDeleting);
-        },
-        reslove
-      )
-    );
+    const cleanUp = async () => {
+      await Promise.all([
+        StatementForwarding.deleteMany({}),
+        Statement.deleteMany({})
+      ]);
+    };
 
     // Setup db with a statement
-    return new Promise((resolve, reject) => {
-      async.parallel({
-        statementForwarding: insertDone => StatementForwarding.create({
-          _id: '59438cabedcedb70146337eb',
-          lrs_id: '560a679c0c5d017e4004714f',
-          organisation: organisationId,
-          active: true,
-          configuration: {
-            url: 'localhost:3101/',
-            method: 'POST'
-          }
-        }, insertDone),
-        statement: insertDone => Statement.create({
-          active: true,
-          _id: statementId,
-          lrs_id: '560a679c0c5d017e4004714f',
-          organisation: organisationId,
-          statement: {
-            test: 'test'
-          },
-          processingQueues: [],
-          completedQueues: []
-        }, insertDone)
-      }, (err) => {
-        if (err) reject(err);
-        resolve();
-      });
-    }).then((params) => { // Do the stuff
-      const promise = new Promise(resolve =>
+    await Promise.all([
+      StatementForwarding.create({
+        _id: '59438cabedcedb70146337eb',
+        lrs_id: '560a679c0c5d017e4004714f',
+        organisation: organisationId,
+        active: true,
+        configuration: {
+          url: 'localhost:3101/',
+          method: 'POST'
+        }
+      }),
+      Statement.create({
+        active: true,
+        _id: statementId,
+        lrs_id: '560a679c0c5d017e4004714f',
+        organisation: organisationId,
+        statement: {
+          test: 'test'
+        },
+        processingQueues: [],
+        completedQueues: []
+      })
+    ]);
+
+    // Do the stuff
+    try {
+      await new Promise(resolve =>
         statementForwardingHandler({ statementId }, () => {
-          resolve(params);
+          resolve();
         }, {
           queue: mockQueue(resolve)
         })
       );
-      return promise;
-    })
-      .then(() => cleanUp(), () => cleanUp())
+    } finally {
+      await cleanUp();
+    }
   }).timeout(5000);
 
   it('Statement end to end', async () => {
     const statementId = '561a679c0c5d017e4004714f';
     const organisationId = '561a679c0c5d017e4004715a';
 
-    await new Promise((resolve) => {
-      async.parallel({
-        statementForwarding: insertDone => StatementForwarding.create({
-          _id: '59438cabedcedb70146337eb',
-          lrs_id: '560a679c0c5d017e4004714f',
-          organisation: organisationId,
-          active: true,
-          configuration: {
-            protocol: 'http',
-            url: 'localhost:3101/',
-            method: 'POST',
-            authType: 'basic auth',
-            basicUsername: 'theBasicUsername',
-            basicPassword: 'theBasicPassword'
-          }
-        }, insertDone),
-        statement: insertDone => Statement.create({
-          active: true,
-          _id: statementId,
-          organisation: organisationId,
-          lrs_id: '560a679c0c5d017e4004714f',
-          statement: {
-            test: 'test'
-          },
-          processingQueues: [],
-          completedQueues: [ // We're only interested in STATEMENT_FORWARDING_REQUEST_QUEUE
-            'STATEMENT_PERSON_QUEUE',
-            'STATEMENT_QUERYBUILDERCACHE_QUEUE'
-          ]
-        }, insertDone)
-      }, resolve);
-    });
+    await Promise.all([
+      StatementForwarding.create({
+        _id: '59438cabedcedb70146337eb',
+        lrs_id: '560a679c0c5d017e4004714f',
+        organisation: organisationId,
+        active: true,
+        configuration: {
+          protocol: 'http',
+          url: 'localhost:3101/',
+          method: 'POST',
+          authType: 'basic auth',
+          basicUsername: 'theBasicUsername',
+          basicPassword: 'theBasicPassword'
+        }
+      }),
+      Statement.create({
+        active: true,
+        _id: statementId,
+        organisation: organisationId,
+        lrs_id: '560a679c0c5d017e4004714f',
+        statement: {
+          test: 'test'
+        },
+        processingQueues: [],
+        completedQueues: [ // We're only interested in STATEMENT_FORWARDING_REQUEST_QUEUE
+          'STATEMENT_PERSON_QUEUE',
+          'STATEMENT_QUERYBUILDERCACHE_QUEUE'
+        ]
+      })
+    ]);
 
     await purgeQueues();
 
