@@ -194,7 +194,7 @@ describe('batchStatementDeletion', () => {
     expect(batchDelete.done).to.equal(false);
     expect(batchDelete.processing).to.equal(false);
 
-    const count = await Statement.find({ organisation: testId, filter: '{"dosent": "exist" }' }).count().exec();
+    const count = await Statement.find({ organisation: testId, filter: '{"dosent": "exist" }' }).countDocuments().exec();
     expect(count).to.equal(0);
   });
 
@@ -238,7 +238,7 @@ describe('batchStatementDeletion', () => {
     expect(batchDelete.done).to.equal(false);
     expect(batchDelete.processing).to.equal(false);
 
-    const count = await Statement.find({ organisation: testId, filter: '{"dosent": "exist" }' }).count().exec();
+    const count = await Statement.find({ organisation: testId, filter: '{"dosent": "exist" }' }).countDocuments().exec();
     expect(count).to.equal(0);
   });
 

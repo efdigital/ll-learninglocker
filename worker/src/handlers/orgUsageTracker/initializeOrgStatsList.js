@@ -10,7 +10,7 @@ import { Statement } from 'lib/models';
 export default async (organisations) => {
   const runDate = (new Date()).toISOString();
 
-  const totalStatements = await Statement.count();
+  const totalStatements = await Statement.countDocuments();
 
   const orgStatsList = await organisations.reduce(async (accP, org) => {
     const acc = await accP;
@@ -18,7 +18,7 @@ export default async (organisations) => {
     const ownCount = await Statement
       .find({ organisation: org._id }, { _id: 0, organisation: 1 })
       .hint({ organisation: 1, timestamp: -1, _id: 1 })
-      .count();
+      .countDocuments();
 
     const totalPercentage = totalStatements > 0 ? 100 * ownCount / totalStatements : 0;
 

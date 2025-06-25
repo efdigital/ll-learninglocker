@@ -47,7 +47,7 @@ describe('API HTTP POST users route scope filtering', () => {
     assertCreate({ bearerToken, basicClient, expectedCode: 403 });
 
   const assertUserCreation = async ({ bearerToken, basicClient }) => {
-    const organisations = [objectId().toString()];
+    const organisations = [new objectId().toString()];
     const email = 'user1@test.com';
     const existingUser = await createUser({ _id: null, email, organisations });
     await assertAuthorised({ bearerToken, basicClient, additionalUserData: { email } }).expect((res) => {
@@ -101,7 +101,7 @@ describe('API HTTP POST users route scope filtering', () => {
   });
 
   it('should create inside the org when using basic client with ALL scopes and additional orgs including the tokens org', async () => {
-    const otherOrg = objectId().toString();
+    const otherOrg = new objectId().toString();
     const basicClient = await createClient([ALL]);
     await assertAuthorised({ basicClient, additionalUserData: { organisations: [otherOrg, testId] } }).expect((res) => {
       assert.deepEqual(res.body.organisations, [testId.toString()], 'Expected created user to have same organisations');
@@ -109,13 +109,13 @@ describe('API HTTP POST users route scope filtering', () => {
   });
 
   it('should create inside the org when using basic client with ALL scopes and additional orgs including the tokens org', async () => {
-    const otherOrg = objectId().toString();
+    const otherOrg = new objectId().toString();
     const basicClient = await createClient([ALL]);
     await assertCreate({ basicClient, additionalUserData: { organisations: [otherOrg] }, expectedCode: 400 });
   });
 
   it('should patch existing user inside the org when using basic client with ALL scopes and additional orgs including the tokens org and existing user is not in token org', async () => {
-    const newOrgId = objectId().toString();
+    const newOrgId = new objectId().toString();
     const email = 'user1@test.com';
     await createUser({ _id: null, email, organisations: [newOrgId] });
 
@@ -129,7 +129,7 @@ describe('API HTTP POST users route scope filtering', () => {
 
   it('should patch existing user inside the org when using basic client with ALL scopes and additional orgs including the tokens org and existing user is already in token org', async () => {
     const tokenOrgId = testId.toString();
-    const newOrgID = objectId().toString();
+    const newOrgID = new objectId().toString();
     const email = 'user1@test.com';
     await createUser({ _id: null, email, organisations: [newOrgID, tokenOrgId] });
 

@@ -33,7 +33,7 @@ describe('API HTTP DELETE visualisations route scope filtering', () => {
     expectedStatus = 204
   }) => {
     const visualisation = await createVisualisation(isPublic,
-      isOwner ? TEST_USER_ID : objectId());
+              isOwner ? TEST_USER_ID : new objectId());
 
     const test = apiApp
       .delete(`${RESTIFY_PREFIX}/visualisation/${visualisation._id.toString()}`)

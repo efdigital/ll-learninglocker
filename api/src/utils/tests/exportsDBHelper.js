@@ -132,7 +132,7 @@ export default class exportsDBHelpers {
       },
       name: 'Taylor Eyno',
       xCount: 2,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -145,7 +145,7 @@ export default class exportsDBHelpers {
       },
       name: 'Bill McDonald',
       xCount: 4,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -158,7 +158,7 @@ export default class exportsDBHelpers {
       },
       name: 'Derek White',
       xCount: 9,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     }
   ]
 
@@ -174,7 +174,7 @@ export default class exportsDBHelpers {
       },
       name: 'Taylor Eyno',
       yCount: 1,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -187,7 +187,7 @@ export default class exportsDBHelpers {
       },
       name: 'Bill McDonald',
       yCount: 3,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -200,7 +200,7 @@ export default class exportsDBHelpers {
       },
       name: 'Mark Chrisman',
       yCount: 3,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -213,7 +213,7 @@ export default class exportsDBHelpers {
       },
       name: 'Derek White',
       yCount: 3,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     }
   ]
 

@@ -8,7 +8,7 @@ const downFn = async ({ key, down }) => {
 
   await down();
   await Migration.find({ key })
-    .remove()
+    .deleteMany()
     .exec();
 
   logger.info(`Finished down migration of ${key}`);
