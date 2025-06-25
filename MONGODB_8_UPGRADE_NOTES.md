@@ -212,9 +212,32 @@ If issues arise:
 3. Revert deprecated method replacements (though not recommended long-term)
 4. Use MongoDB 7.x until issues resolved
 
+### Additional Integration Fixes (Final Phase)
+
+#### Organisation Model Hook Fix
+**Issue**: `post('remove')` hook not triggering with `document.deleteOne()` in Mongoose 8
+- ✅ Changed `post('remove')` to `post('deleteOne', { document: true, query: false })`
+- ✅ Removed `next()` callback (not needed in Mongoose 8 async post hooks)
+- **File**: `lib/models/organisation.js`
+
+#### Statement Model Aggregation Cursor Fix  
+**Issue**: `.cursor().exec()` pattern not working in Mongoose 8
+- ✅ Removed `.exec()` from `query.cursor({ batchSize }).exec()`
+- ✅ Now uses `query.cursor({ batchSize })` directly
+- **File**: `lib/models/statement.js`
+
+#### Import Personas Stream Processing Fix
+**Issue**: Highland stream with nested async function causing data loss and improper stream synchronization
+- ✅ Changed `flatMap` with nested async highland stream to simple `map` with synchronous function
+- ✅ Added proper stream synchronization with Promise to wait for highland stream completion
+- ✅ Fixed CSV processing timing issues that were causing empty result arrays in tests
+- **File**: `lib/services/importPersonas/importPersonas.js`
+
 ## Notes
 
 - The codebase is now compatible with MongoDB 8 and Mongoose 8
 - All deprecated methods have been replaced with their modern equivalents
 - Connection configuration follows MongoDB 8 best practices
-- No breaking changes to application logic were required 
+- No breaking changes to application logic were required
+- All middleware hooks updated for Mongoose 8 behavior
+- Stream processing patterns fixed for proper data flow 
