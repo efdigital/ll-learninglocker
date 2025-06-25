@@ -30,6 +30,7 @@ import StatementMetadataController from 'api/controllers/StatementMetadataContro
 import BatchDeleteController from 'api/controllers/BatchDeleteController';
 import RequestAppAccessController from 'api/controllers/RequestAppAccessController';
 import PersonaAttributeController from 'api/controllers/PersonaAttributeController';
+import VisualisationController from 'api/controllers/VisualisationController';
 
 // MODELS
 import LRS from 'lib/models/lrs';
@@ -277,6 +278,12 @@ router.get(
 );
 
 router.get(
+  routes.PERSONA_ATTRIBUTE_COUNT,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  PersonaAttributeController.getPersonaAttributeCount
+);
+
+router.get(
   routes.PERSONA_ATTRIBUTE_ID,
   passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
   PersonaAttributeController.getPersonaAttribute
@@ -286,6 +293,12 @@ router.post(
   routes.PERSONA_ATTRIBUTE,
   passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
   PersonaAttributeController.createPersonaAttribute
+);
+
+router.post(
+  routes.PERSONA_ATTRIBUTE_ID,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  PersonaAttributeController.updatePersonaAttribute
 );
 
 router.put(
@@ -304,6 +317,20 @@ router.delete(
   routes.PERSONA_ATTRIBUTE_ID,
   passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
   PersonaAttributeController.deletePersonaAttribute
+);
+
+// PersonaAttribute connection route
+router.get(
+  routes.CONNECTION_PERSONA_ATTRIBUTE,
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  generateConnectionController(PersonaAttribute)
+);
+
+// Custom DELETE route for Visualisation to work around express-restify-mongoose 9.x scope filtering issues
+router.delete(
+  '/v2/visualisation/:id',
+  passport.authenticate(['jwt', 'clientBasic'], DEFAULT_PASSPORT_OPTIONS),
+  VisualisationController.deleteVisualisation
 );
 
 /**

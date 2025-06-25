@@ -61,7 +61,7 @@ describe('deletePersonaIdentifier', () => {
     });
 
     const connection = getConnection();
-    await connection.collection('statements').insert({
+    await connection.collection('statements').insertOne({
       organisation: new ObjectId(organisation),
       statement: {
         actor: { mbox: ifi.value }

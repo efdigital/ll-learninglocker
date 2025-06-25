@@ -20,14 +20,81 @@ const getPersonaAttributes = catchErrors(async (req, res) => {
     authInfo
   });
 
-  try {
+    try {
     const organisation = getOrgFromAuthInfo(authInfo);
-    const personaAttributes = await PersonaAttribute.find({ organisation });
+
+    // Build query with any filters from query parameters
+    const query = { organisation };
+
+    // Handle express-restify-mongoose style query parameter
+    if (req.query.query) {
+      try {
+        const parsedQuery = JSON.parse(req.query.query);
+        Object.assign(query, parsedQuery);
+      } catch (parseError) {
+        return res.status(400).json({
+          error: 'Invalid query parameter format'
+        });
+      }
+    }
+
+    // Add simple persona filter if provided
+    if (req.query.persona) {
+      query.persona = req.query.persona;
+    }
+
+    const personaAttributes = await PersonaAttribute.find(query);
     return res.json(personaAttributes);
   } catch (error) {
     console.error('Error fetching PersonaAttributes:', error);
     return res.status(500).json({
       error: 'Internal server error while fetching PersonaAttributes'
+    });
+  }
+});
+
+/**
+ * Get PersonaAttribute count
+ */
+const getPersonaAttributeCount = catchErrors(async (req, res) => {
+  const authInfo = getAuthFromRequest(req);
+
+  // Check user has read permissions
+  await getScopeFilter({
+    modelName: MODEL_NAME,
+    actionName: 'view',
+    authInfo
+  });
+
+    try {
+    const organisation = getOrgFromAuthInfo(authInfo);
+
+    // Build query with any filters from query parameters
+    const query = { organisation };
+
+    // Handle express-restify-mongoose style query parameter
+    if (req.query.query) {
+      try {
+        const parsedQuery = JSON.parse(req.query.query);
+        Object.assign(query, parsedQuery);
+      } catch (parseError) {
+        return res.status(400).json({
+          error: 'Invalid query parameter format'
+        });
+      }
+    }
+
+    // Add simple persona filter if provided
+    if (req.query.persona) {
+      query.persona = req.query.persona;
+    }
+
+    const count = await PersonaAttribute.countDocuments(query);
+    return res.json({ count });
+  } catch (error) {
+    console.error('Error counting PersonaAttributes:', error);
+    return res.status(500).json({
+      error: 'Internal server error while counting PersonaAttributes'
     });
   }
 });
@@ -211,6 +278,7 @@ const deletePersonaAttribute = catchErrors(async (req, res) => {
 export default {
   getPersonaAttributes,
   getPersonaAttribute,
+  getPersonaAttributeCount,
   createPersonaAttribute,
   updatePersonaAttribute,
   deletePersonaAttribute
