@@ -27,7 +27,7 @@ const runSample = async (orgStatsList) => {
     if (!orgStats.finished) {
       await StatementSample
         .aggregate([
-          { $match: { organisation: objectId(orgStats.organisation) } },
+          { $match: { organisation: new objectId(orgStats.organisation) } },
           { $out: 'statementOrgSamples' }
         ])
         .exec();

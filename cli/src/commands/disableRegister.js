@@ -6,7 +6,7 @@ const objectId = mongoose.Types.ObjectId;
 
 export default async function () {
   await SiteSettings.updateOne({
-    _id: objectId(SITE_SETTINGS_ID)
+    _id: new objectId(SITE_SETTINGS_ID)
   }, {
     dontShowRegistration: true
   }, {

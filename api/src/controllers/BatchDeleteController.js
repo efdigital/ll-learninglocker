@@ -77,7 +77,7 @@ const terminateBatchDelete = catchErrors(async (req, res) => {
   const { authInfo, scopeFilter } = await authenticate(req, 'batchdelete');
   const filter = {
     ...scopeFilter,
-    _id: objectId(req.params.id)
+    _id: new objectId(req.params.id)
   };
 
   const batchDelete = await BatchDelete.findOne(filter);

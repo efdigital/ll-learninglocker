@@ -30,7 +30,7 @@ const runBatchDelete = async ({
       await redisClient.set(BATCH_STATEMENT_DELETION_CACHE_KEY, 1, 'EX', batchStatementDeletionLockTimoutSec, 'NX') :
       'OK';
 
-  const siteSettings = await SiteSettings.findOne({ _id: objectId(SITE_SETTINGS_ID) });
+  const siteSettings = await SiteSettings.findOne({ _id: new objectId(SITE_SETTINGS_ID) });
   if (res === 'OK') {
     const inDeletionWindow = inWindow(siteSettings);
     if (inDeletionWindow) {

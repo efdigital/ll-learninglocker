@@ -29,7 +29,7 @@ describe('statementForwardingDeadLetterHandler', () => {
       statement: {
         test: 'test'
       },
-      pendingForwardingQueue: [objectId(statementForwardingId)]
+      pendingForwardingQueue: [new objectId(statementForwardingId)]
     };
 
     await Statement.create(statement);

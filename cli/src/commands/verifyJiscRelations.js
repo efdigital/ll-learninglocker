@@ -17,39 +17,36 @@ import StudentCourseInstance from 'lib/plugins/jisc_1_2_6/models/studentCourseIn
 import StudentCourseMembership from 'lib/plugins/jisc_1_2_6/models/studentCourseMembership';
 import StudentModuleInstance from 'lib/plugins/jisc_1_2_6/models/studentModuleInstance';
 
-const findAllModelsAndSave = (schema, cb) => {
-  schema.find({}, (err, models) => {
-    if (err) cb(err);
-    async.map(
-      models,
-      (model, doneSaving) => model.save(doneSaving),
-      cb
-    );
-  });
+const findAllModelsAndSave = async (schema) => {
+  const models = await schema.find({});
+  await Promise.all(models.map(model => model.save()));
 };
 
-export default function () {
+export default async function () {
   logger.info('Updating relations...');
 
-  async.series([
-    async.apply(findAllModelsAndSave, AssessmentInstance),
-    async.apply(findAllModelsAndSave, Course),
-    async.apply(findAllModelsAndSave, CourseInstance),
-    async.apply(findAllModelsAndSave, Institution),
-    async.apply(findAllModelsAndSave, Module),
-    async.apply(findAllModelsAndSave, ModuleInstance),
-    async.apply(findAllModelsAndSave, ModuleVleMap),
-    async.apply(findAllModelsAndSave, Staff),
-    async.apply(findAllModelsAndSave, StaffCourseInstance),
-    async.apply(findAllModelsAndSave, StaffModuleInstance),
-    async.apply(findAllModelsAndSave, Student),
-    async.apply(findAllModelsAndSave, StudentAssessmentInstance),
-    async.apply(findAllModelsAndSave, StudentCourseInstance),
-    async.apply(findAllModelsAndSave, StudentCourseMembership),
-    async.apply(findAllModelsAndSave, StudentModuleInstance),
-  ], (err) => {
-    if (err) logger.error(err);
-    else logger.info('All relations updated.');
+  try {
+    await Promise.all([
+      findAllModelsAndSave(AssessmentInstance),
+      findAllModelsAndSave(Course),
+      findAllModelsAndSave(CourseInstance),
+      findAllModelsAndSave(Institution),
+      findAllModelsAndSave(Module),
+      findAllModelsAndSave(ModuleInstance),
+      findAllModelsAndSave(ModuleVleMap),
+      findAllModelsAndSave(Staff),
+      findAllModelsAndSave(StaffCourseInstance),
+      findAllModelsAndSave(StaffModuleInstance),
+      findAllModelsAndSave(Student),
+      findAllModelsAndSave(StudentAssessmentInstance),
+      findAllModelsAndSave(StudentCourseInstance),
+      findAllModelsAndSave(StudentCourseMembership),
+      findAllModelsAndSave(StudentModuleInstance),
+    ]);
+    logger.info('All relations updated.');
     process.exit();
-  });
+  } catch (err) {
+    logger.error(err);
+    process.exit(1);
+  }
 }

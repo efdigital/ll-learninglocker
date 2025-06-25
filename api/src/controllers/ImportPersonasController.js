@@ -65,7 +65,7 @@ const importPersonasError = catchErrors(async (req, res) => {
   });
 
   const personaImport = await PersonasImport.findOne({
-    _id: objectId(id),
+    _id: new objectId(id),
     ...scopeFilter
   });
 

@@ -120,7 +120,7 @@ const statementForwardingRequestHandler = async (
 
     let update = {
       timestamp: new Date(),
-      statementForwarding_id: objectId(statementForwarding._id),
+      statementForwarding_id: new objectId(statementForwarding._id),
       message: err.toString()
     };
 

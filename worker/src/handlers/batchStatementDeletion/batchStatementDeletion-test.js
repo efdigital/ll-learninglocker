@@ -39,14 +39,14 @@ describe('batchStatementDeletion', () => {
     });
 
     await Client.create({
-      _id: objectId(testClientId),
+      _id: new objectId(testClientId),
       organisation: testId,
-      lrs_id: objectId(testStoreId),
+      lrs_id: new objectId(testStoreId),
       scopes: [XAPI_STATEMENTS_DELETE]
     });
 
     await Client.create({
-      _id: objectId(testClientIdNoLRS),
+      _id: new objectId(testClientIdNoLRS),
       organisation: testId,
       scopes: [XAPI_STATEMENTS_DELETE]
     });

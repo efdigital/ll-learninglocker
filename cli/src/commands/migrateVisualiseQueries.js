@@ -3,10 +3,12 @@ import async from 'async';
 import Visualisation from 'lib/models/visualisation';
 import _ from 'lodash';
 
-export default function () {
+export default async function () {
   logger.info('Updating visualisation queries...');
-  Visualisation.find({}, (err, visualisations) => {
-    async.map(visualisations, (model, next) => {
+  try {
+    const visualisations = await Visualisation.find({});
+
+    await Promise.all(visualisations.map(async (model) => {
       // for each key in filters
       model.filters = _.mapValues(model.toObject().filters, filterKey =>
          _.map(filterKey, (filter) => {
@@ -20,11 +22,13 @@ export default function () {
            return JSON.stringify(json);
          })
       );
-      model.save(next);
-    }, (err, results) => {
-      if (err) logger.error(err);
-      else logger.info(`${results.size} models updated`);
-      process.exit();
-    });
-  });
+      return model.save();
+    }));
+
+    logger.info(`${visualisations.length} models updated`);
+    process.exit();
+  } catch (err) {
+    logger.error(err);
+    process.exit(1);
+  }
 }

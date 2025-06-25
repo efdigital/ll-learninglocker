@@ -5,9 +5,9 @@ import mongoose from 'mongoose';
 const objectId = mongoose.Types.ObjectId;
 
 export default class exportsDBHelpers {
-  prepare = (done) => {
-    async.parallel({
-      statement1: insertDone => Statement.create({
+  prepare = async () => {
+    try {
+      const statement1 = await Statement.create({
         active: true,
         _id: '561a679c0c5d017e4004714f',
         lrs_id: '560a679c0c5d017e4004714f',
@@ -39,8 +39,9 @@ export default class exportsDBHelpers {
         voided: false,
         timestamp: '2016-04-15T11:21:27.000Z',
         updated_at: '2016-04-15T11:21:27.705Z',
-      }, insertDone),
-      statement2: insertDone => Statement.create({
+      });
+
+      const statement2 = await Statement.create({
         active: true,
         _id: '562a679c0c5d017e4004714f',
         lrs_id: '560a679c0c5d017e4004714f',
@@ -72,8 +73,9 @@ export default class exportsDBHelpers {
         voided: false,
         timestamp: '2016-04-15T11:21:27.000Z',
         updated_at: '2016-04-15T11:21:27.705Z',
-      }, insertDone),
-      statement3: insertDone => Statement.create({
+      });
+
+      const statement3 = await Statement.create({
         active: true,
         _id: '563a679c0c5d017e4004714f',
         lrs_id: '560a679c0c5d017e4004714f',
@@ -105,19 +107,16 @@ export default class exportsDBHelpers {
         voided: false,
         timestamp: '2016-04-15T11:21:27.000Z',
         updated_at: '2016-04-15T11:21:27.705Z',
-      }, insertDone),
-    }, (err, results) => {
-      this.statements = results;
-      done(err);
-    });
+      });
+
+      this.statements = { statement1, statement2, statement3 };
+    } catch (err) {
+      throw err;
+    }
   }
 
-  cleanUp = (done) => {
-    async.forEach([
-      Statement
-    ], (model, doneDeleting) => {
-      model.deleteMany({}, doneDeleting);
-    }, done);
+  cleanUp = async () => {
+    await Statement.deleteMany({});
   }
 
   xStream = [
