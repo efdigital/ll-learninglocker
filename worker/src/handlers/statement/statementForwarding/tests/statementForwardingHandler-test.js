@@ -10,8 +10,31 @@ import { unsubscribeAll } from 'lib/services/queue';
 import statementForwardingHandler from '../statementForwardingHandler';
 import { purgeQueues } from './utils';
 
+// Global cleanup to ensure all queue subscriptions are closed after this test file
+after(async () => {
+  try {
+    await unsubscribeAll();
+    console.log('Successfully unsubscribed from all queues after worker tests');
+  } catch (err) {
+    console.warn('Failed to unsubscribe from queues after tests:', err.message);
+  }
+});
+
 describe('Statement Forwarding handler', () => {
+  beforeEach(async () => {
+    try {
+      await unsubscribeAll();
+    } catch (err) {
+      console.warn('Failed to unsubscribe from queues:', err.message);
+    }
+  });
+
   afterEach(async () => {
+    try {
+      await unsubscribeAll();
+    } catch (err) {
+      console.warn('Failed to unsubscribe from queues:', err.message);
+    }
     try {
       await StatementForwarding.deleteMany({});
     } catch (err) {
