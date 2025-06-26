@@ -278,12 +278,61 @@ If issues arise:
 - **Workaround**: Core application functionality remains intact; REST API may need manual testing
 - **Status**: This appears to be a limitation in express-restify-mongoose's Mongoose 8 integration
 
+#### Test Process Hanging Resolution (Critical Production vs Test Environment Issue)
+
+**Issue**: After MongoDB 8/Mongoose 8 upgrade, test processes would hang indefinitely after test completion instead of exiting naturally.
+
+**Root Cause**: MongoDB driver production features designed for uptime and stability were preventing clean test shutdowns:
+- `socketTimeoutMS: 300000` (5-minute socket timeout for production stability)
+- `maxPoolSize: 20` (connection pooling with persistent connections)
+- **Internal heartbeat timers** (10-second and 2-second intervals for server monitoring)
+- **Automatic reconnection features** built into MongoDB Driver 6.x
+
+**Investigation**: Used `wtfnode` package temporarily to identify what was keeping the Node.js event loop alive (package later removed for production safety):
+```javascript
+[WTF Node?] open handles:
+- Sockets: 127.0.0.1:53522 -> 127.0.0.1:27017  
+- Timers: (10000 ~ 10 s) (anonymous) @ unknown:0
+         (2000 ~ 2 s) (anonymous) @ unknown:0
+```
+
+**Solution**: Implemented comprehensive test cleanup in `api/src/routes/tests/utils/globalCleanup.js`:
+
+1. **Aggressive Mongoose Connection Cleanup**:
+   - Use `connection.close(true)` with `force=true` to bypass production features
+   - Force close default connection and all tracked connections
+   - Call `mongoose.disconnect()` for global cleanup
+
+2. **Direct Socket Destruction**:
+   - Scan `process._getActiveHandles()` for remaining MongoDB sockets (port 27017)
+   - Force destroy persistent sockets using `handle.destroy()`
+   - This bypasses heartbeat timers and connection pool maintenance
+
+3. **Test-Specific Cleanup Strategy**:
+   - Removed non-functional `--exit` flag (Mocha 2.5.3 doesn't support it)
+   - Added global cleanup file included in test runner
+   - Used `wtfnode` temporarily for debugging (later removed for production safety)
+
+**Result**:
+- ✅ Tests now exit cleanly without `process.exit(0)` hacks
+- ✅ Natural process termination when event loop is clear
+- ✅ Proper production vs test environment separation
+- ✅ No impact on production connection stability
+
+**Files Modified**:
+- `package.json`: Updated test scripts and removed non-functional `--exit` flag
+- `api/src/routes/tests/utils/globalCleanup.js`: Comprehensive cleanup implementation
+- `api/src/routes/tests/utils/setup.js`: Simplified individual test cleanup
+
+**Key Insight**: The MongoDB driver's production features (long timeouts, heartbeats, connection pools) that enhance database reliability in production need aggressive cleanup in test environments.
+
 ## Final Status
 
-🎉 **MONGODB 8 UPGRADE COMPLETE**
+🎉 **MONGODB 8 UPGRADE COMPLETE WITH FULL TEST SUITE RESOLUTION**
 
 **Test Results**: 
-- Main test suite: **PASSING** (665 tests)
+- Main test suite: **PASSING** (665 tests + comprehensive API test suite)
+- Test process hanging: **RESOLVED** - Tests exit cleanly and naturally
 - Known Issues: 1 test failing (PersonaAttribute REST deletion due to express-restify-mongoose limitation)
 
 **Core Compatibility Achieved**:
@@ -292,9 +341,11 @@ If issues arise:
 - ✅ All connection configurations updated for new versions
 - ✅ All model methods and hooks working correctly
 - ✅ Authentication system fully functional
+- ✅ Test environment vs production environment properly separated
+- ✅ Clean test process termination without hanging
 - ✅ All critical application functionality intact
 
-**Summary**: The Learning Locker codebase is now fully compatible with MongoDB 8 and Mongoose 8. The remaining PersonaAttribute REST API issue is a minor limitation that doesn't affect core application functionality.
+**Summary**: The Learning Locker codebase is now fully compatible with MongoDB 8 and Mongoose 8. The test suite runs cleanly with proper process termination. The remaining PersonaAttribute REST API issue is a minor limitation that doesn't affect core application functionality.
 
 ## Notes
 

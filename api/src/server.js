@@ -23,7 +23,9 @@ app.use(cookieParser());
 app.use(passport.initialize());
 app.use(HttpRoutes);
 
-if (process.env.API_PORT) {
+// Only start the server if not in test mode
+// When testing, supertest will handle server lifecycle
+if (process.env.API_PORT && !process.env.TESTING) {
   app.listen(process.env.API_PORT, (err) => {
     if (err) {
       logger.error(err);
@@ -38,7 +40,7 @@ if (process.env.API_PORT) {
     );
     if (process.send) process.send('ready');
   });
-} else {
+} else if (!process.env.TESTING) {
   logger.error(
     '==>     ERROR: No PORT environment variable has been specified'
   );
