@@ -5,7 +5,7 @@ import setup from 'api/routes/tests/utils/setup';
 import createOrgToken from 'api/routes/tests/utils/tokens/createOrgToken';
 import { ALL } from 'lib/constants/scopes';
 import NoModel from 'jscommons/dist/errors/NoModel';
-import NoModelWithId from '@learninglocker/persona-service/dist/errors/NoModelWithId';
+import NoModelWithId from '@processcomplete/ll-learninglocker-persona-service/dist/errors/NoModelWithId';
 import getPersonaService from 'lib/connections/personaService';
 
 
