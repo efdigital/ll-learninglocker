@@ -21,13 +21,13 @@ const runSample = async (orgStatsList) => {
     .allowDiskUse(true)
     .exec();
 
-  const totalSampleCount = await StatementSample.count();
+  const totalSampleCount = await StatementSample.countDocuments();
 
   for (const orgStats of orgStatsList) {
     if (!orgStats.finished) {
       await StatementSample
         .aggregate([
-          { $match: { organisation: objectId(orgStats.organisation) } },
+          { $match: { organisation: new objectId(orgStats.organisation) } },
           { $out: 'statementOrgSamples' }
         ])
         .exec();
@@ -37,7 +37,7 @@ const runSample = async (orgStatsList) => {
 
       const orgSampleCount = await Statement
         .find({ organisation: orgStats.organisation }, { _id: 0, organisation: 1 })
-        .count();
+        .countDocuments();
 
       const orgSamplePercentage = 100 * orgSampleCount / totalSampleCount;
       if (orgSamplePercentage >= orgStats.totalPercentage - ACCEPTABLE_SAMPLE_THRESHOLD_PERCENTAGE) {

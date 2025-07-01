@@ -4,15 +4,16 @@ import QueryBuilderCache from 'lib/models/querybuildercache';
 import async from 'async';
 
 export default class queryBuilderCacheDBHelper {
-  prepare = (done) => {
-    async.parallel({
-      lrs: insertDone => Lrs.create({
+  prepare = async () => {
+    try {
+      const lrs = await Lrs.create({
         _id: '560a679c0c5d017e4004714f',
         title: 'TEST',
         description: 'TEST LRS',
         organisation: '561a679c0c5d017e4004714f',
-      }, insertDone),
-      actorStatement: insertDone => Statement.create({
+      });
+
+      const actorStatement = await Statement.create({
         active: true,
         _id: '561a679c0c5d017e4004714f',
         lrs_id: '560a679c0c5d017e4004714f',
@@ -43,8 +44,9 @@ export default class queryBuilderCacheDBHelper {
         voided: false,
         timestamp: '2016-04-15T11:21:27.000Z',
         updated_at: '2016-04-15T11:21:27.705Z',
-      }, insertDone),
-      personStatement: insertDone => Statement.create({
+      });
+
+      const personStatement = await Statement.create({
         active: true,
         _id: '563a679c0c5d017e4004714f',
         lrs_id: '560a679c0c5d017e4004714f',
@@ -79,21 +81,20 @@ export default class queryBuilderCacheDBHelper {
         voided: false,
         timestamp: '2016-04-15T11:21:27.000Z',
         updated_at: '2016-04-15T11:21:27.705Z',
-      }, insertDone)
-    }, (err, results) => {
-      this.actorStatement = results.actorStatement;
-      this.personStatement = results.personStatement;
-      done(err);
-    });
+      });
+
+      this.actorStatement = actorStatement;
+      this.personStatement = personStatement;
+    } catch (err) {
+      throw err;
+    }
   }
 
-  cleanUp = (done) => {
-    async.forEach([
-      Statement,
-      Lrs,
-      QueryBuilderCache
-    ], (model, doneDeleting) => {
-      model.deleteMany({}, doneDeleting);
-    }, done);
+  cleanUp = async () => {
+    await Promise.all([
+      Statement.deleteMany({}),
+      Lrs.deleteMany({}),
+      QueryBuilderCache.deleteMany({})
+    ]);
   }
 }

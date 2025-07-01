@@ -9,7 +9,7 @@ export default (personaVal, personaKey = 'persona') => {
   }
 
   if (isString(personaVal)) {
-    return { [personaKey]: objectId(personaVal) };
+    return { [personaKey]: new objectId(personaVal) };
   }
 
   return {

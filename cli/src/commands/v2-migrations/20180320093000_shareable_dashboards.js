@@ -29,7 +29,7 @@ const up = async () => {
     });
 
     return OldDashboardModel.updateOne(
-      { _id: objectId(dashboard._id) },
+      { _id: new objectId(dashboard._id) },
       {
         shareable,
       },
@@ -55,7 +55,7 @@ const down = async () => {
     const shareable = dashboard.shareable.shift();
 
     return OldDashboardModel.updateOne(
-      { _id: objectId(dashboard._id) },
+      { _id: new objectId(dashboard._id) },
       {
         filter: shareable.filter,
         visibility: shareable.visibility,

@@ -16,15 +16,9 @@ import extractPersonasHandler, {
 
 const objectId = mongoose.Types.ObjectId;
 
-const cleanUp = () => new Promise(reslove =>
-  async.forEach(
-    [Statement],
-    (model, doneDeleting) => {
-      model.deleteMany({}, doneDeleting);
-    },
-    reslove
-  )
-);
+const cleanUp = async () => {
+  await Statement.deleteMany({});
+};
 
 describe('Extract persona handler', () => {
   const personaService = getPersonaService();
@@ -89,7 +83,7 @@ describe('Extract persona handler', () => {
 
     expect(persona.name).to.equal('Juan Morales');
 
-    const statement = await Statement.findById(objectId(statementId));
+    const statement = await Statement.findById(new objectId(statementId));
 
     expect(statement.person._id.toString()).to.equal(personaId);
     expect(statement.person.display).to.equal('Juan Morales');
@@ -118,7 +112,7 @@ describe('Extract persona handler', () => {
 
     expect(persona.name).to.equal('Juan Morales');
 
-    const statement = await Statement.findById(objectId(statementId));
+    const statement = await Statement.findById(new objectId(statementId));
 
     expect(statement.person._id.toString()).to.equal(personaId);
     expect(statement.personaIdentifier.toString()).to.equal(identifierId);
@@ -146,7 +140,7 @@ describe('Extract persona handler', () => {
 
     // Add the identifier
 
-    const statement = await Statement.findById(statementId);
+    const statement = await Statement.findById(new objectId(statementId));
 
     await promisify(extractPersonasStatementHandler(personaService))([statement]);
 
@@ -165,7 +159,7 @@ describe('Extract persona handler', () => {
 
     expect(persona.name).to.equal('Lucky');
 
-    const statement2 = await Statement.findById(objectId(statementId));
+    const statement2 = await Statement.findById(new objectId(statementId));
 
     expect(statement2.person._id.toString()).to.equal(personaId);
     expect(statement2.personaIdentifier.toString()).to.equal(identifierId);
@@ -188,8 +182,8 @@ describe('Extract persona handler', () => {
     )({ statementId: queueStatementId });
 
     // TEST
-    const statement1 = await Statement.findById(objectId(statementId));
-    const statement2 = await Statement.findById(objectId(queueStatementId));
+    const statement1 = await Statement.findById(new objectId(statementId));
+    const statement2 = await Statement.findById(new objectId(queueStatementId));
 
     expect(statement1.person._id.toString()).to.equal(
       statement2.person._id.toString()

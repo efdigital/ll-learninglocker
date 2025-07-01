@@ -33,7 +33,7 @@ describe('userOrganisationSettings.router', () => {
   const nonUserManagerRoleId = 'ffffcccc2222cccc2222cccc';
 
   const org1OrganisationSetting = {
-    organisation: objectId(org1Id),
+    organisation: new objectId(org1Id),
     scopes: '',
     roles: [nonUserManagerRoleId],
     filter: '{}',
@@ -41,7 +41,7 @@ describe('userOrganisationSettings.router', () => {
   };
 
   const org2OrganisationSetting = {
-    organisation: objectId(org2Id),
+    organisation: new objectId(org2Id),
     scopes: '',
     roles: [],
     filter: '{}',

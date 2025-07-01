@@ -39,27 +39,40 @@ describe('batchStatementDeletion', () => {
     });
 
     await Client.create({
-      _id: objectId(testClientId),
+      _id: new objectId(testClientId),
       organisation: testId,
-      lrs_id: objectId(testStoreId),
+      lrs_id: new objectId(testStoreId),
       scopes: [XAPI_STATEMENTS_DELETE]
     });
 
     await Client.create({
-      _id: objectId(testClientIdNoLRS),
+      _id: new objectId(testClientIdNoLRS),
       organisation: testId,
       scopes: [XAPI_STATEMENTS_DELETE]
     });
   });
 
-  afterEach((done) => {
-    async.forEach(
-      [Statement, SiteSettings, BatchDelete, Client],
-      (model, doneDeleting) => {
-        model.deleteMany({}, doneDeleting);
-      },
-      done
-    );
+  afterEach(async () => {
+    try {
+      await Statement.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up Statement:', err.message);
+    }
+    try {
+      await SiteSettings.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up SiteSettings:', err.message);
+    }
+    try {
+      await BatchDelete.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up BatchDelete:', err.message);
+    }
+    try {
+      await Client.deleteMany({});
+    } catch (err) {
+      console.warn('Failed to clean up Client:', err.message);
+    }
   });
 
   it('should delete statements if in the window', async () => {
@@ -194,7 +207,7 @@ describe('batchStatementDeletion', () => {
     expect(batchDelete.done).to.equal(false);
     expect(batchDelete.processing).to.equal(false);
 
-    const count = await Statement.find({ organisation: testId, filter: '{"dosent": "exist" }' }).count().exec();
+    const count = await Statement.find({ organisation: testId, filter: '{"dosent": "exist" }' }).countDocuments().exec();
     expect(count).to.equal(0);
   });
 
@@ -238,7 +251,7 @@ describe('batchStatementDeletion', () => {
     expect(batchDelete.done).to.equal(false);
     expect(batchDelete.processing).to.equal(false);
 
-    const count = await Statement.find({ organisation: testId, filter: '{"dosent": "exist" }' }).count().exec();
+    const count = await Statement.find({ organisation: testId, filter: '{"dosent": "exist" }' }).countDocuments().exec();
     expect(count).to.equal(0);
   });
 
@@ -494,7 +507,7 @@ describe('batchStatementDeletion', () => {
     }, () => {});
 
     // all statemenst should be there;
-    const result = await Statement.count({ organisation: testId });
+    const result = await Statement.countDocuments({ organisation: testId });
     expect(result).to.equal(3);
 
     const batchDelete = await BatchDelete.findById(batchDeleteId);

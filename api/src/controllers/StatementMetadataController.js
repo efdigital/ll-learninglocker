@@ -20,7 +20,7 @@ export const patchStatementMetadata = catchErrors(async (req, res) => {
 
   const filter = {
     $and: [
-      { _id: objectId(req.params.id) },
+      { _id: new objectId(req.params.id) },
       scopeFilter
     ]
   };
@@ -46,7 +46,7 @@ export const postStatementMetadata = catchErrors(async (req, res) => {
 
   const filter = {
     $and: [
-      { _id: objectId(req.params.id) },
+      { _id: new objectId(req.params.id) },
       scopeFilter
     ]
   };

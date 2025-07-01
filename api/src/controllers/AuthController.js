@@ -41,33 +41,27 @@ const buildRefreshCookieOption = (protocol) => {
  * @param  {Function} next
  * @return HTTP 204 No Content on success
  */
-const resetPasswordRequest = (req, res, next) => {
+const resetPasswordRequest = async (req, res, next) => {
   const { email } = req.body;
-  User.findOne({ email }, (findErr, user) => {
-    if (findErr) {
-      return next(findErr);
-    }
+  try {
+    const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(204).send();
     }
 
-    return user.createResetToken((token) => {
-      user.resetTokens.push(token);
-      user.save((err) => {
-        if (err) {
-          logger.error('Password reset error', err);
-          return res.status(500).send({ message: 'There was an issue. Please try again' });
-        }
+    const token = await user.createResetToken();
+    user.resetTokens.push(token);
+    await user.save();
 
-        // @TODO: send status based on outcome of send!!
-        sendResetPasswordToken(user, token);
+    // @TODO: send status based on outcome of send!!
+    sendResetPasswordToken(user, token);
 
-        return res.status(204).send();
-      });
-    });
-    // create a reset token and insert it onto the user
-  });
+    return res.status(204).send();
+  } catch (err) {
+    logger.error('Password reset error', err);
+    return res.status(500).send({ message: 'There was an issue. Please try again' });
+  }
 };
 
 /**
@@ -77,7 +71,7 @@ const resetPasswordRequest = (req, res, next) => {
  * @param  {Function} next
  * @return HTTP 200 with user on success
  */
-const resetPassword = (req, res, next) => {
+const resetPassword = async (req, res, next) => {
   const { email, token, password } = req.body;
   const now = new Date();
 
@@ -85,47 +79,40 @@ const resetPassword = (req, res, next) => {
     return res.status(400).send({ message: 'You must enter a password' });
   }
 
-  return User.findOne(
-    {
+  try {
+    const user = await User.findOne({
       email,
       'resetTokens.token': token,
       'resetTokens.expires': { $gt: now }
-    },
-    (err, user) => {
-      if (err) {
-        return next(err);
-      }
+    });
 
-      if (!user) {
-        return res.status(404).send({ message: 'Invalid password reset token. Please submit a new request' });
-      }
-
-      // clear the reset tokens, any lockouts and save the password
-      // (hashing and validation will need to take place)
-      user.resetTokens = [];
-      user.password = password;
-
-      // save the user
-      return user.save((err, savedUser) => {
-        // validation errors may get thrown here, return the error message
-        if (err) {
-          if (err.statusCode) {
-            res.status(err.statusCode);
-          } else {
-            res.status(400);
-          }
-          return res.send(err);
-        }
-
-        // return the saved user
-        return res.send(savedUser);
-      });
+    if (!user) {
+      return res.status(404).send({ message: 'Invalid password reset token. Please submit a new request' });
     }
-  );
+
+    // clear the reset tokens, any lockouts and save the password
+    // (hashing and validation will need to take place)
+    user.resetTokens = [];
+    user.password = password;
+
+    // save the user
+    const savedUser = await user.save();
+
+    // return the saved user
+    return res.send(savedUser);
+  } catch (err) {
+    // validation errors may get thrown here, return the error message
+    if (err.statusCode) {
+      res.status(err.statusCode);
+    } else {
+      res.status(400);
+    }
+    return res.send(err);
+  }
 };
 
 const jwt = (req, res, next) => {
-  passport.authenticate('userBasic', { session: false }, (err, data) => {
+  passport.authenticate('userBasic', { session: false }, async (err, data) => {
     if (err) {
       return next(err); // will generate a 500 error
     }
@@ -171,9 +158,12 @@ const jwt = (req, res, next) => {
           user.authLockoutExpiry = new Date();
         }
         user.authLastAttempt = new Date();
-        return user.save(() =>
-           authFailure(data.reason)
-        );
+        try {
+          await user.save();
+          return authFailure(data.reason);
+        } catch (err) {
+          return authFailure(AUTH_FAILURE.OTHER);
+        }
       }
       return authFailure(data.reason);
     }
@@ -182,21 +172,20 @@ const jwt = (req, res, next) => {
     user.authLockoutExpiry = null;
     user.authFailedAttempts = 0;
     user.authLastAttempt = new Date();
-    return user.save(() =>
-      Promise.all([createUserJWT(user), createUserRefreshJWT(user)])
-        .then(
-          ([accessToken, refreshToken]) =>
-            res
-              .cookie(
-                `refresh_token_user_${user._id}`,
-                refreshToken,
-                buildRefreshCookieOption(req.protocol),
-              )
-              .set('Content-Type', 'text/plain')
-              .send(accessToken)
-          )
-        .catch(authFailure)
-    );
+    try {
+      await user.save();
+      const [accessToken, refreshToken] = await Promise.all([createUserJWT(user), createUserRefreshJWT(user)]);
+      return res
+        .cookie(
+          `refresh_token_user_${user._id}`,
+          refreshToken,
+          buildRefreshCookieOption(req.protocol),
+        )
+        .set('Content-Type', 'text/plain')
+        .send(accessToken);
+    } catch (err) {
+      return authFailure(AUTH_FAILURE.OTHER);
+    }
   })(req, res, next);
 };
 
@@ -279,7 +268,7 @@ const success = (req, res) => {
 };
 
 const issueOAuth2AccessToken = (req, res) => {
-  passport.authenticate('OAuth2_Authorization', DEFAULT_PASSPORT_OPTIONS, (err, client) => {
+  passport.authenticate('OAuth2_Authorization', DEFAULT_PASSPORT_OPTIONS, async (err, client) => {
     if (err) {
       if (err.isClientError) {
         res.status(400);
@@ -296,24 +285,23 @@ const issueOAuth2AccessToken = (req, res) => {
     const expireAt = new Date(createdAt.getTime());
     expireAt.setSeconds(createdAt.getSeconds() + ACCESS_TOKEN_VALIDITY_PERIOD_SEC);
 
-    OAuthToken.create({
-      clientId: client._id,
-      accessToken,
-      createdAt,
-      expireAt,
-    }, (err) => {
-      if (err) {
-        res.status(500);
-        res.send(err);
-        return;
-      }
+    try {
+      await OAuthToken.create({
+        clientId: client._id,
+        accessToken,
+        createdAt,
+        expireAt,
+      });
       res.status(200);
       res.send({
         access_token: accessToken,
         token_type: 'bearer',
         expires_in: ACCESS_TOKEN_VALIDITY_PERIOD_SEC,
       });
-    });
+    } catch (err) {
+      res.status(500);
+      res.send(err);
+    }
   })(req, res);
 };
 

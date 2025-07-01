@@ -21,24 +21,42 @@ describe('Export helper tests', () => {
     await Statement.deleteMany({});
   });
 
-  before((done) => {
+  before(async () => {
     if (connection.readyState !== 1) {
-      connection.then(() => { done(); });
-    } else {
-      done();
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Database connection timeout after 10 seconds'));
+        }, 10000);
+
+        const onConnected = () => {
+          clearTimeout(timeout);
+          connection.removeListener('error', onError);
+          resolve();
+        };
+
+        const onError = (error) => {
+          clearTimeout(timeout);
+          connection.removeListener('connected', onConnected);
+          reject(error);
+        };
+
+        connection.once('connected', onConnected);
+        connection.once('error', onError);
+      });
     }
   });
 
-  beforeEach('Set up statements for testing', (done) => {
+  beforeEach('Set up statements for testing', async () => {
     try {
-      exportDBHelper.prepare(done);
+      await exportDBHelper.prepare();
     } catch (e) {
       console.error(e);
+      throw e;
     }
   });
 
-  afterEach('Clear db collections', (done) => {
-    exportDBHelper.cleanUp(done);
+  afterEach('Clear db collections', async () => {
+    await exportDBHelper.cleanUp();
   });
 
   describe('groupStreams', () => {

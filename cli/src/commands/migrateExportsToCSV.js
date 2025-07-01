@@ -11,7 +11,7 @@ const logError = err =>
   logger.error(err);
 
 const migrateDoc = (doc) => {
-  const filter = { _id: objectId(doc._id) };
+      const filter = { _id: new objectId(doc._id) };
   const update = { $set: { url: `${doc.url}.csv` } };
   logger.debug(`Migrating ${doc.name} ${doc._id}`);
   return Download.updateOne(filter, update).then(res =>

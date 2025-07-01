@@ -18,7 +18,7 @@ export default wrapHandlerForStatement(STATEMENT_FORWARDING_QUEUE, (statement, d
   queue = Queue
 } = {}) =>
   StatementForwarding.find({
-    organisation: objectId(statement.organisation),
+    organisation: new objectId(statement.organisation),
     active: true,
     _id: {
       $nin: statement.completedForwardingQueue

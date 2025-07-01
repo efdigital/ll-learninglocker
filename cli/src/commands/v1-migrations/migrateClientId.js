@@ -16,7 +16,7 @@ const migrateDoc = (client) => {
   const filter = {
     client_id: client._id.toString()
   };
-  const update = { client: objectId(client._id) };
+  const update = { client: new objectId(client._id) };
   const options = { runValidators: false };
 
   logger.debug(`Migrating ${client.title} ${client._id}`);

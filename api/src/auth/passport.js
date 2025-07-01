@@ -125,7 +125,7 @@ passport.use(
 // passport.authenticate('userBasic', { session: false })
 passport.use(
   'userBasic',
-  new BasicStrategy((username, password, done) => {
+  new BasicStrategy(async (username, password, done) => {
     const info = {
       user: false,
       clearLockout: false,
@@ -134,8 +134,8 @@ passport.use(
     };
     if (password === '' || !password) return done(null, info);
 
-    User.findOne({ email: username }, (err, user) => {
-      if (err) return done(err);
+    try {
+      const user = await User.findOne({ email: username });
       if (!user) {
         info.reason = AUTH_FAILURE.USER_NOT_FOUND;
         return done(null, info);
@@ -161,22 +161,23 @@ passport.use(
         }
       }
 
-      bcrypt.compare(password, user.password, (compareErr, success) => {
-        info.success = success;
-        if (!success) {
-          info.reason = AUTH_FAILURE.PASSWORD_INCORRECT;
-        }
-        return done(null, info);
-      });
-    });
+      const success = await bcrypt.compare(password, user.password);
+      info.success = success;
+      if (!success) {
+        info.reason = AUTH_FAILURE.PASSWORD_INCORRECT;
+      }
+      return done(null, info);
+    } catch (err) {
+      return done(err);
+    }
   })
 );
 
 passport.use(
   'clientBasic',
-  new BasicStrategy((clientId, clientSecret, done) => {
-    Client.findOne({ 'api.basic_key': clientId }, (err, client) => {
-      if (err) return done(err);
+  new BasicStrategy(async (clientId, clientSecret, done) => {
+    try {
+      const client = await Client.findOne({ 'api.basic_key': clientId });
       if (!client) return done(null, false);
       if (!client.isTrusted) return done(null, false);
       client.authInfo = {
@@ -188,7 +189,9 @@ passport.use(
       };
       if (client.api.basic_secret === clientSecret) return done(null, client);
       return done(null, false);
-    });
+    } catch (err) {
+      return done(err);
+    }
   })
 );
 
@@ -197,7 +200,7 @@ passport.use(
  */
 passport.use(
   'OAuth2_Authorization',
-  new CustomStrategy((req, done) => {
+  new CustomStrategy(async (req, done) => {
     const grantType = req.body.grant_type;
     const clientId = req.body.client_id;
     const clientSecret = req.body.client_secret;
@@ -216,34 +219,30 @@ passport.use(
       return;
     }
 
-    Client.findOne(
-      {
+    try {
+      const client = await Client.findOne({
         'api.basic_key': clientId,
         'api.basic_secret': clientSecret,
         isTrusted: true,
-      },
-      (err, client) => {
-        if (err) {
-          done({ error: err });
-          return;
-        }
+      });
 
-        if (!client) {
-          done({ isClientError: true, error: 'invalid_client' });
-          return;
-        }
-
-        client.authInfo = {
-          client,
-          scopes: client.scopes,
-          token: {
-            tokenType: 'client'
-          }
-        };
-
-        done(null, client);
+      if (!client) {
+        done({ isClientError: true, error: 'invalid_client' });
+        return;
       }
-    );
+
+      client.authInfo = {
+        client,
+        scopes: client.scopes,
+        token: {
+          tokenType: 'client'
+        }
+      };
+
+      done(null, client);
+    } catch (err) {
+      done({ error: err });
+    }
   })
 );
 

@@ -20,14 +20,11 @@ describe('batchDelete', () => {
     done();
   });
 
-  afterEach((done) => {
-    async.forEach(
-      [SiteSettings, BatchDelete],
-      (model, doneDeleting) => {
-        model.deleteMany({}, doneDeleting);
-      },
-      done
-    );
+  afterEach(async () => {
+    await Promise.all([
+      SiteSettings.deleteMany({}),
+      BatchDelete.deleteMany({})
+    ]);
   });
 
   it('should schedule the next run and add to queue if the time is in window', async () => {

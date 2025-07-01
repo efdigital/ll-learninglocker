@@ -5,9 +5,9 @@ import mongoose from 'mongoose';
 const objectId = mongoose.Types.ObjectId;
 
 export default class exportsDBHelpers {
-  prepare = (done) => {
-    async.parallel({
-      statement1: insertDone => Statement.create({
+  prepare = async () => {
+    try {
+      const statement1 = await Statement.create({
         active: true,
         _id: '561a679c0c5d017e4004714f',
         lrs_id: '560a679c0c5d017e4004714f',
@@ -39,8 +39,9 @@ export default class exportsDBHelpers {
         voided: false,
         timestamp: '2016-04-15T11:21:27.000Z',
         updated_at: '2016-04-15T11:21:27.705Z',
-      }, insertDone),
-      statement2: insertDone => Statement.create({
+      });
+
+      const statement2 = await Statement.create({
         active: true,
         _id: '562a679c0c5d017e4004714f',
         lrs_id: '560a679c0c5d017e4004714f',
@@ -72,8 +73,9 @@ export default class exportsDBHelpers {
         voided: false,
         timestamp: '2016-04-15T11:21:27.000Z',
         updated_at: '2016-04-15T11:21:27.705Z',
-      }, insertDone),
-      statement3: insertDone => Statement.create({
+      });
+
+      const statement3 = await Statement.create({
         active: true,
         _id: '563a679c0c5d017e4004714f',
         lrs_id: '560a679c0c5d017e4004714f',
@@ -105,19 +107,16 @@ export default class exportsDBHelpers {
         voided: false,
         timestamp: '2016-04-15T11:21:27.000Z',
         updated_at: '2016-04-15T11:21:27.705Z',
-      }, insertDone),
-    }, (err, results) => {
-      this.statements = results;
-      done(err);
-    });
+      });
+
+      this.statements = { statement1, statement2, statement3 };
+    } catch (err) {
+      throw err;
+    }
   }
 
-  cleanUp = (done) => {
-    async.forEach([
-      Statement
-    ], (model, doneDeleting) => {
-      model.deleteMany({}, doneDeleting);
-    }, done);
+  cleanUp = async () => {
+    await Statement.deleteMany({});
   }
 
   xStream = [
@@ -132,7 +131,7 @@ export default class exportsDBHelpers {
       },
       name: 'Taylor Eyno',
       xCount: 2,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -145,7 +144,7 @@ export default class exportsDBHelpers {
       },
       name: 'Bill McDonald',
       xCount: 4,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -158,7 +157,7 @@ export default class exportsDBHelpers {
       },
       name: 'Derek White',
       xCount: 9,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     }
   ]
 
@@ -174,7 +173,7 @@ export default class exportsDBHelpers {
       },
       name: 'Taylor Eyno',
       yCount: 1,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -187,7 +186,7 @@ export default class exportsDBHelpers {
       },
       name: 'Bill McDonald',
       yCount: 3,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -200,7 +199,7 @@ export default class exportsDBHelpers {
       },
       name: 'Mark Chrisman',
       yCount: 3,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     },
     {
       _id: {
@@ -213,7 +212,7 @@ export default class exportsDBHelpers {
       },
       name: 'Derek White',
       yCount: 3,
-      identifier: objectId('0000000aa0a000a00aa00000'),
+      identifier: new objectId('0000000aa0a000a00aa00000'),
     }
   ]
 

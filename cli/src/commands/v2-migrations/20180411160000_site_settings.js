@@ -9,7 +9,7 @@ const objectId = mongoose.Types.ObjectId;
 const up = async () => {
   try {
     await new SiteSettings({
-      _id: objectId(SITE_SETTINGS_ID)
+      _id: new objectId(SITE_SETTINGS_ID)
     }).save();
   } catch (err) {
     if (err.code === 11000) return;
