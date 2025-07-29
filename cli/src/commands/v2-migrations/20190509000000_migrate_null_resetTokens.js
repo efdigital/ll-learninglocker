@@ -6,7 +6,7 @@ const up = async () => {
   const connection = getConnection();
   logger.info('Updating all resetTokens with null expiry to expire in 24 hours from now.');
   const newExpiry = moment().add(1, 'day').toDate();
-  await connection.collection('users').update({ 'resetTokens.expires': null }, { $set: { 'resetTokens.$.expires': newExpiry } });
+  await connection.collection('users').updateMany({ 'resetTokens.expires': null }, { $set: { 'resetTokens.$.expires': newExpiry } });
 };
 
 const down = async () => {
